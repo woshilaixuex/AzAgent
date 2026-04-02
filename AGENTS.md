@@ -1,32 +1,35 @@
-# Repository Guidelines
+# 仓库指南
 
-## Project Structure & Module Organization
-This repository is currently a minimal Node.js package with TypeScript tooling installed. The tracked project files are `package.json` and `package-lock.json`; dependencies live in `node_modules/` and should not be edited manually.
+## 项目结构与模块组织
+当前仓库是一个安装了 TypeScript 工具链的最小化 Node.js 包。当前受版本控制的项目文件为 `package.json` 和 `package-lock.json`；依赖位于 `node_modules/` 中，不应手动修改。
 
-When adding application code, place TypeScript sources in `src/` and keep tests in `tests/` or next to the module as `*.test.ts`. Keep the root clean: configuration files belong at the top level, while runtime code should stay out of the repository root.
+添加应用代码时，请将 TypeScript 源文件放在 `src/` 目录下，并将测试放在 `tests/` 中，或与模块同目录并命名为 `*.test.ts`。保持仓库根目录整洁：配置文件放在顶层，运行时代码不要直接放在仓库根目录。
 
-## Build, Test, and Development Commands
-- `npm install` — installs project dependencies from `package-lock.json`.
-- `npm test` — runs the current placeholder test script; it intentionally fails until real tests are added.
-- `npx tsc --noEmit` — recommended for TypeScript type-checking once `tsconfig.json` and `src/` files are added.
+`src/`下有对应的`README.md`文档，里面有对各个模块的功能以及每个文件里具体函数作用的详解
+## 构建、测试与开发命令
+- `npm install`：根据 `package-lock.json` 安装项目依赖。
+- `npm test`：运行当前占位测试脚本；在添加真实测试之前，它会按预期失败。
+- `npx tsc --noEmit`：在添加 `tsconfig.json` 和 `src/` 文件后，推荐使用该命令进行 TypeScript 类型检查。
 
-If you add new workflows, expose them through `package.json` scripts so contributors can use consistent commands such as `npm run build` or `npm run dev`.
+如果你新增了工作流，请通过 `package.json` 中的脚本对外暴露，这样贡献者就可以使用统一命令，例如 `npm run build` 或 `npm run dev`。
 
-## Coding Style & Naming Conventions
-Use TypeScript for new source files unless there is a strong reason to stay in plain JavaScript. Prefer 2-space indentation, semicolons, and single-responsibility modules. Use:
+## 编码风格与命名约定
+新增源码文件请优先使用 TypeScript，除非有充分理由继续使用纯 JavaScript。推荐使用 2 个空格缩进、分号，以及单一职责模块。命名约定如下：
 
-- `camelCase` for variables and functions
-- `PascalCase` for classes and types
-- `kebab-case` for file names, e.g. `task-runner.ts`
+- 变量和函数使用 `camelCase`
+- 类和类型使用 `PascalCase`
+- 文件名使用 `kebab-case`，例如 `task-runner.ts`
 
-Keep modules small and avoid editing generated or vendored files under `node_modules/`.
+保持模块小而清晰，避免编辑 `node_modules/` 下自动生成或第三方引入的文件。
 
-## Testing Guidelines
-There is no test framework configured yet. Add tests with the feature you introduce, and wire the chosen runner into `package.json`. Name tests clearly by behavior, for example `agent-client.test.ts` or `agent-client.spec.ts`.
+## 测试指南
+当前尚未配置测试框架。新增功能时请一并补充测试，并将所选测试运行器接入 `package.json`。测试文件命名应清晰表达行为，例如 `agent-client.test.ts` 或 `agent-client.spec.ts`。
 
-Before opening a PR, run the relevant test command plus `npx tsc --noEmit` if TypeScript sources are present.
+在提交 PR 之前，请运行相关测试命令；如果仓库中包含 TypeScript 源码，也请运行 `npx tsc --noEmit`。
 
-## Commit & Pull Request Guidelines
-This workspace does not include Git history, so no repository-specific commit pattern is available. Use clear, imperative commit messages such as `feat: add agent bootstrap` or `fix: handle missing config`.
+## 提交与 Pull Request 指南
+当前工作区未包含 Git 历史，因此没有可参考的仓库专属提交规范。请使用清晰、祈使式的提交信息，例如 `feat: add agent bootstrap` 或 `fix: handle missing config`。
 
-Pull requests should include a short summary, implementation notes, linked issues when applicable, and terminal output or screenshots for behavior changes.
+Pull Request 应包含简要摘要、实现说明、相关 issue 链接（如适用），以及行为变更对应的终端输出或截图。
+## 注意事项
+记得每次操作完，把`src`包下面各个模块的`README.md`文件完善下，让他与符合项目
