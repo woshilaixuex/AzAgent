@@ -91,5 +91,22 @@ const getCurrentTime = tool(
     schema: z.object({}).describe("No input required")
   },
 );
+const readDir = tool(
+  async () =>{
 
+  },
+  {
+    name: "readDir",
+    description: "read dir",
+  },
+);
+const readFile = tool(
+  async () =>{
+
+  },
+  {
+    name: "readFile",
+    description: "read file.",
+  },
+);
 export const local_tools = [getWeather,getCurrentTime];

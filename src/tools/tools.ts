@@ -1,6 +1,6 @@
 import path from "node:path";
 import { promises as fs } from "node:fs";
-
+import type { StructuredToolInterface } from "@langchain/core/tools";
 import { tool } from "langchain";
 import { z } from "zod";
 
@@ -86,18 +86,47 @@ const readProjectFile = tool(
   },
 );
 
-const getCurrentTime = tool(
-  async () =>
-    new Intl.DateTimeFormat("zh-CN", {
-      dateStyle: "full",
-      timeStyle: "long",
-    }).format(new Date()),
-  {
-    name: "get_current_time",
-    description: "Get the current local date and time.",
-    schema: z.object({}),
-  },
-);
 
-export const tools = [listProjectFiles, readProjectFile, getCurrentTime];
 
+export const tools = [listProjectFiles, readProjectFile];
+/**
+ * @name 被管理工具
+ * @description 被管理工具
+ */
+export interface ManagedTool {
+  name: string;
+  description: string;
+  source: "local" | "skill" | "mcp" | "other";
+  tool: StructuredToolInterface;
+}
+/**
+ * @name 工具调用请求
+ * @description
+ */
+export interface ToolRequest{
+
+}
+/**
+ * @name 工具调用返回
+ * @description
+ */
+export interface ToolResponce{
+  
+}
+/**
+ * @name 工具管理器
+ * @description 负责工具管理，将function call、skills、mcp变成tools并加载，支持热加载
+ * 
+ */
+export class ToolsManager{
+  public tools : ManagedTool[] = [];
+  registerTools(){
+
+  }
+  logOutTools(){
+
+  }
+  callTools(){
+
+  }
+}
