@@ -1,7 +1,7 @@
 import { stdin as input, stdout as output } from "node:process";
 import { createInterface } from "node:readline/promises";
 
-import { createCliAgent } from "./agent.js";
+import { getCliAgent } from "./agent.js";
 import { parseCliArgs, helpText } from "./cli.js";
 import type { AgentMessage } from "./core/agent.js";
 
@@ -9,7 +9,7 @@ async function runPrompt(
   prompt: string,
   history: AgentMessage[],
 ): Promise<{ reply: string; history: AgentMessage[] }> {
-  const agent = createCliAgent();
+  const agent = await getCliAgent();
   const result = await agent.chat({
     messages: [...history, { role: "user", content: prompt }],
   });

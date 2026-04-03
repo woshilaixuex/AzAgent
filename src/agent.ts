@@ -1,5 +1,6 @@
 import { createAgent } from "langchain";
 import { ChatOpenAI } from "@langchain/openai";
+import { z } from "zod";
 
 import { getConfig } from "./config/config.js";
 import {
@@ -12,8 +13,13 @@ import {
 import { tools } from "./tools/tools.js";
 import { local_tools } from "./tools/local.js";
 import { logger } from "./log/logger.js";
+import { SkillsLoader, type Skill } from "./skills/skill.js";
 type LangChainRunnableAgent = ReturnType<typeof createAgent>;
-type LangChainTool = (typeof tools)[number];
+type AgentTool = {
+  name: string;
+  description: string;
+  invoke(input: unknown): Promise<unknown>;
+};
 
 function normalizeMessageContent(content: unknown): string {
   if (typeof content === "string") {
@@ -69,37 +75,27 @@ function getFilePathFromInput(input: unknown): string {
 export class LangChainCliAgent extends AbstractAgent {
   private readonly runnableAgent: LangChainRunnableAgent;
 
-  constructor() {
-    logger.info("agent create")
+  constructor(
+    allTools: AgentTool[],
+    loadedSkills: readonly Skill<z.ZodTypeAny>[],
+    systemPrompt: string,
+    model: ChatOpenAI,
+  ) {
+    logger.info("agent create");
     super({
       id: "cli-agent",
       name: "CLI Agent",
       description: "LangChain-powered CLI agent for local project assistance.",
     });
 
-    const config = getConfig();
-
-    const model = new ChatOpenAI({
-      model: config.model,
-      temperature: 0,
-      apiKey: config.apiKey,
-      streamUsage: config.baseUrl ? false : true,
-      ...(config.baseUrl
-        ? {
-            configuration: {
-              baseURL: config.baseUrl,
-            },
-          }
-        : {}),
-    });
-    const allTools = [...tools, ...local_tools];
     this.runnableAgent = createAgent({
       model,
-      tools: allTools,
-      systemPrompt: config.systemPrompt,
+      tools: [...allTools],
+      systemPrompt,
     });
 
-    this.registerBuiltInFunctions(tools);
+    this.registerBuiltInFunctions(allTools);
+    this.registerLoadedSkills(loadedSkills);
     this.registerBuiltInSkills();
     this.registerBuiltInMcpServer();
   }
@@ -122,21 +118,26 @@ export class LangChainCliAgent extends AbstractAgent {
     };
   }
 
-  private registerBuiltInFunctions(toolList: readonly LangChainTool[]): void {
+  private registerBuiltInFunctions(toolList: readonly AgentTool[]): void {
     for (const tool of toolList) {
-      const invoker = tool as {
-        name: string;
-        description: string;
-        invoke(input: unknown): Promise<unknown>;
-      };
-
       const agentFunction: AgentFunction = {
-        name: invoker.name,
-        description: invoker.description,
-        execute: async (input) => invoker.invoke(input),
+        name: tool.name,
+        description: tool.description,
+        execute: async (input) => tool.invoke(input),
       };
 
       this.registerFunction(agentFunction);
+    }
+  }
+
+  private registerLoadedSkills(loadedSkills: readonly Skill<z.ZodTypeAny>[]): void {
+    for (const skill of loadedSkills) {
+      this.registerSkill({
+        name: skill.name,
+        description: skill.description,
+        inputSchema: skill.schema,
+        execute: async (input) => skill.run(input as z.infer<typeof skill.schema>),
+      });
     }
   }
 
@@ -195,6 +196,42 @@ export class LangChainCliAgent extends AbstractAgent {
   }
 }
 
-export function createCliAgent(): LangChainCliAgent {
-  return new LangChainCliAgent();
+let cliAgentPromise: Promise<LangChainCliAgent> | undefined;
+
+export async function createCliAgent(): Promise<LangChainCliAgent> {
+  const config = getConfig();
+  const model = new ChatOpenAI({
+    model: config.model,
+    temperature: 0,
+    apiKey: config.apiKey,
+    streamUsage: config.baseUrl ? false : true,
+    ...(config.baseUrl
+      ? {
+          configuration: {
+            baseURL: config.baseUrl,
+          },
+        }
+      : {}),
+  });
+
+  const skillsLoader = new SkillsLoader();
+  const loadedSkills = await skillsLoader.skillLoad();
+  const skillTools = loadedSkills.map((skill) => skill.toTool());
+  const allTools = [...tools, ...local_tools, ...skillTools];
+
+  return new LangChainCliAgent(
+    allTools,
+    loadedSkills,
+    config.systemPrompt,
+    model,
+  );
+}
+
+export function getCliAgent(): Promise<LangChainCliAgent> {
+  cliAgentPromise ??= createCliAgent();
+  return cliAgentPromise;
+}
+
+export function resetCliAgent(): void {
+  cliAgentPromise = undefined;
 }
