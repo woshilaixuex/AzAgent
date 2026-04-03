@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { SkillsLoader } from "../src/skills/skill.js";
+import { SkillsLoader } from "../src/tools/skills/skill.js";
 
 test("SkillsLoader.dirsLoad returns skill directory names and paths", async () => {
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), "skills-loader-"));

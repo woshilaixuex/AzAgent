@@ -10,10 +10,10 @@ import {
   type AgentChatResponse,
   type AgentFunction,
 } from "./core/agent.js";
-import { tools } from "./tools/tools.js";
-import { local_tools } from "./tools/local.js";
+import { tools } from "./tools/local/tools.js";
+import { local_tools } from "./tools/local/local.js";
 import { logger } from "./log/logger.js";
-import { SkillsLoader, type Skill } from "./skills/skill.js";
+import { SkillsLoader, type Skill } from "./tools/skills/skill.js";
 type LangChainRunnableAgent = ReturnType<typeof createAgent>;
 type AgentTool = {
   name: string;
@@ -195,7 +195,10 @@ export class LangChainCliAgent extends AbstractAgent {
     );
   }
 }
-
+/**
+ * @name 控制台agent
+ * @description 实现最基础的功能
+ */
 let cliAgentPromise: Promise<LangChainCliAgent> | undefined;
 
 export async function createCliAgent(): Promise<LangChainCliAgent> {
