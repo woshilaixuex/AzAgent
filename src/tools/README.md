@@ -30,6 +30,13 @@
 - `ToolsManager`
   - 提供注册、列出、调用托管工具的基础能力
 
+- `local/LocalFC`
+  - 本地 function-call 的定义对象
+  - 和 `Skill` 一样实现 `CanManaged`
+  - 通过 `localFunctions` 集中声明，再统一转成 `ManagedTool`
+
 ## 当前约定
 
 如果一个对象想接入工具管理层，推荐直接实现 `CanManaged`。这样调用 `toTools()` 后，就能得到标准化的 `ManagedTool` 结构，避免在不同模块里重复拼装 `name`、`description`、`source` 和 `tool`。
+
+当前本地函数工具已经按这个约定实现：`src/tools/local/local.ts` 中的 `LocalFC` 负责描述 function-call，`createToolsManager()` 会统一注册 `localFunctions` 和 `skills`。

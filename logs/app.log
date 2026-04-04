@@ -7,3 +7,12 @@
 {"level":30,"time":1775142248176,"pid":25472,"hostname":"林","msg":"agent create"}
 {"level":30,"time":1775182774669,"pid":28148,"hostname":"林","msg":"agent create"}
 {"level":30,"time":1775284235772,"pid":28912,"hostname":"林","msg":"agent create"}
+{"level":30,"time":1775289266629,"pid":20652,"hostname":"林","msg":"注册skills成功"}
+{"level":30,"time":1775289266630,"pid":20652,"hostname":"林","msg":"agent create"}
+{"level":30,"time":1775289511034,"pid":10880,"hostname":"林","msg":"注册skills成功"}
+{"level":30,"time":1775289511034,"pid":10880,"hostname":"林","msg":"agent create"}
+{"level":30,"time":1775289597976,"pid":12972,"hostname":"林","msg":"注册skills成功"}
+{"level":30,"time":1775289597977,"pid":12972,"hostname":"林","msg":"agent create"}
+{"level":30,"time":1775291205710,"pid":33736,"hostname":"林","msg":"注册local function tools成功"}
+{"level":30,"time":1775291205711,"pid":33736,"hostname":"林","msg":"注册skills成功"}
+{"level":30,"time":1775291205711,"pid":33736,"hostname":"林","msg":"agent create"}

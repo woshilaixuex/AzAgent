@@ -3,6 +3,28 @@ import { z } from "zod";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 
+import type { CanManaged, ManagedRuntimeTool } from "../tools.js";
+/**
+ * @name 本地方法调用被管理对象
+ */
+export class LocalFC<TSchema extends z.ZodTypeAny> implements CanManaged {
+  public readonly source = "local" as const;
+
+  constructor(
+    public name: string,
+    public description: string,
+    public schema: TSchema,
+    public run: (input: z.infer<TSchema>) => Promise<string> | string,
+  ) {}
+
+  public toTool(): ManagedRuntimeTool {
+    return tool(this.run, {
+      name: this.name,
+      description: this.description,
+      schema: this.schema,
+    });
+  }
+}
 function describeWeatherCode(code: number): string {
   const weatherCodeMap: Record<number, string> = {
     0: '晴朗',
@@ -32,10 +54,16 @@ function describeWeatherCode(code: number): string {
  * @name 获取天气
  * @description 获取
  */
-export const getWeather = tool(
+export const getWeatherFunction = new LocalFC(
+  "get_weather",
+  "Get current weather and the next few days forecast by city name",
+  z.object({
+    city: z.string().min(1).describe("City name"),
+    days: z.number().int().min(1).max(7).default(3).describe("How many forecast days to return, including today"),
+  }),
   async ({ city, days = 3 }) => {
     const geoRes = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh&format=json`
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh&format=json`,
     );
     const geo = await geoRes.json();
     const place = geo.results?.[0];
@@ -74,30 +102,20 @@ export const getWeather = tool(
       forecast,
     }, null, 2);
   },
-  {
-    name: "get_weather",
-    description: "Get current weather and the next few days forecast by city name",
-    schema: z.object({
-      city: z.string().min(1).describe("City name"),
-      days: z.number().int().min(1).max(7).default(3).describe("How many forecast days to return, including today"),
-    }),
-  }
 );
 /**
  * @name 获取当前时间
  * @description 获取当前所在时区的时间
  */
-const getCurrentTime = tool(
+export const getCurrentTimeFunction = new LocalFC(
+  "get_current_time",
+  "Get the current local date and time.",
+  z.object({}).describe("No input required"),
   async () =>
     new Intl.DateTimeFormat("zh-CN", {
       dateStyle: "full",
       timeStyle: "long",
     }).format(new Date()),
-  {
-    name: "get_current_time",
-    description: "Get the current local date and time.",
-    schema: z.object({}).describe("No input required")
-  },
 );
 const projectRoot = process.cwd();
 const ignoredEntries = new Set(["node_modules", "dist", ".git"]);
@@ -144,7 +162,12 @@ async function walkFiles(
  * @name 列出当前项目的文件
  * @description 列出对应文件目录下的文件
  */
-const listProjectFiles = tool(
+export const listProjectFilesFunction = new LocalFC(
+  "list_project_files",
+  "List files inside the current project directory.",
+  z.object({
+    maxDepth: z.number().int().min(0).max(4).default(2),
+  }),
   async ({ maxDepth }) => {
     const foundFiles: string[] = [];
     await walkFiles(projectRoot, maxDepth, foundFiles);
@@ -155,19 +178,17 @@ const listProjectFiles = tool(
 
     return foundFiles.sort().join("\n");
   },
-  {
-    name: "list_project_files",
-    description: "List files inside the current project directory.",
-    schema: z.object({
-      maxDepth: z.number().int().min(0).max(4).default(2),
-    }),
-  },
 );
 /**
  * @name 读取文件
  * @description 读取对应路径下的utf8文件
  */
-const readProjectFile = tool(
+export const readProjectFileFunction = new LocalFC(
+  "read_project_file",
+  "Read a UTF-8 text file from the current project.",
+  z.object({
+    filePath: z.string().min(1).describe("Relative path inside the project"),
+  }),
   async ({ filePath }) => {
     const absolutePath = resolveProjectPath(filePath);
     const rawContent = await fs.readFile(absolutePath, "utf8");
@@ -178,18 +199,15 @@ const readProjectFile = tool(
 
     return `${rawContent.slice(0, 6000)}\n\n[truncated]`;
   },
-  {
-    name: "read_project_file",
-    description: "Read a UTF-8 text file from the current project.",
-    schema: z.object({
-      filePath: z.string().min(1).describe("Relative path inside the project"),
-    }),
-  },
 );
-export const local_tools = [getWeather,getCurrentTime,listProjectFiles,readProjectFile];
+
+export const localFunctions = [
+  getWeatherFunction,
+  getCurrentTimeFunction,
+  listProjectFilesFunction,
+  readProjectFileFunction,
+] as const;
+
+export const local_tools = localFunctions.map((item) => item.toTool());
 
 
-
-export function LocalTools2ManagedTools(){
-  
-}

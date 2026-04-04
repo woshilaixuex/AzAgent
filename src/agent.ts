@@ -10,9 +10,9 @@ import {
   type AgentChatResponse,
   type AgentFunction,
 } from "./core/agent.js";
-import { local_tools } from "./tools/local/local.js";
 import { logger } from "./log/logger.js";
 import { SkillsLoader, type Skill } from "./tools/skills/skill.js";
+import { createToolsManager } from "./tools/manager.js";
 type LangChainRunnableAgent = ReturnType<typeof createAgent>;
 type AgentTool = {
   name: string;
@@ -76,7 +76,7 @@ export class LangChainCliAgent extends AbstractAgent {
 
   constructor(
     allTools: AgentTool[],
-    loadedSkills: readonly Skill<z.ZodTypeAny>[],
+    loadedSkills: readonly Skill<z.ZodTypeAny>[] = [],
     systemPrompt: string,
     model: ChatOpenAI,
   ) {
@@ -218,8 +218,8 @@ export async function createCliAgent(): Promise<LangChainCliAgent> {
 
   const skillsLoader = new SkillsLoader();
   const loadedSkills = await skillsLoader.skillLoad();
-  const skillTools = loadedSkills.map((skill) => skill.toTool());
-  const allTools = [...local_tools, ...skillTools];
+  const toolsManager = await createToolsManager(loadedSkills);
+  const allTools = toolsManager.tools.map((managedTool) => managedTool.tool);
 
   return new LangChainCliAgent(
     allTools,

@@ -1,5 +1,5 @@
 import { logger } from "../log/logger.js";
-import { local_tools } from "./local/local.js";
+import { localFunctions } from "./local/local.js";
 import { SkillsLoader } from "./skills/skill.js";
 import { ManagedTool,CanManaged,toTools,isManagedCollection} from "./tools.js";
 
@@ -63,12 +63,17 @@ export class ToolsManager {
  * @description 主要用于管理器的初始化，加载初始化skills、mcp、local function进管理器
  * @returns 工具管理器
  */
-export async function createToolsManager(): Promise<ToolsManager> {
-    var toolsManager = new ToolsManager();
-    const skillsLoader = new SkillsLoader();
-    const loadedSkills = await skillsLoader.skillLoad();
-    toolsManager.registerTools(loadedSkills)
-    logger.info("注册skills成功")
-    
-    return toolsManager;
+export async function createToolsManager(
+  loadedSkills?: readonly CanManaged[],
+): Promise<ToolsManager> {
+  const toolsManager = new ToolsManager();
+  const skillTools = loadedSkills ?? await new SkillsLoader().skillLoad();
+
+  toolsManager.registerTools(localFunctions);
+  logger.info("注册local function tools成功");
+
+  toolsManager.registerTools(skillTools);
+  logger.info("注册skills成功");
+
+  return toolsManager;
 }
