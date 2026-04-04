@@ -1,5 +1,7 @@
 import { tool } from "langchain";
 import { z } from "zod";
+import path from "node:path";
+import { promises as fs } from "node:fs";
 
 function describeWeatherCode(code: number): string {
   const weatherCodeMap: Record<number, string> = {
@@ -26,7 +28,10 @@ function describeWeatherCode(code: number): string {
 
   return weatherCodeMap[code] ?? '未知天气';
 }
-
+/**
+ * @name 获取天气
+ * @description 获取
+ */
 export const getWeather = tool(
   async ({ city, days = 3 }) => {
     const geoRes = await fetch(
@@ -78,7 +83,10 @@ export const getWeather = tool(
     }),
   }
 );
-
+/**
+ * @name 获取当前时间
+ * @description 获取当前所在时区的时间
+ */
 const getCurrentTime = tool(
   async () =>
     new Intl.DateTimeFormat("zh-CN", {
@@ -91,22 +99,97 @@ const getCurrentTime = tool(
     schema: z.object({}).describe("No input required")
   },
 );
-const readDir = tool(
-  async () =>{
+const projectRoot = process.cwd();
+const ignoredEntries = new Set(["node_modules", "dist", ".git"]);
 
+function resolveProjectPath(relativePath: string): string {
+  const resolvedPath = path.resolve(projectRoot, relativePath);
+  const normalizedRoot = projectRoot.endsWith(path.sep)
+    ? projectRoot
+    : `${projectRoot}${path.sep}`;
+
+  if (resolvedPath !== projectRoot && !resolvedPath.startsWith(normalizedRoot)) {
+    throw new Error("Only files inside the current project can be accessed.");
+  }
+
+  return resolvedPath;
+}
+
+async function walkFiles(
+  currentDir: string,
+  remainingDepth: number,
+  foundFiles: string[],
+): Promise<void> {
+  const entries = await fs.readdir(currentDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (ignoredEntries.has(entry.name)) {
+      continue;
+    }
+
+    const absolutePath = path.join(currentDir, entry.name);
+    const relativePath = path.relative(projectRoot, absolutePath) || ".";
+
+    if (entry.isDirectory()) {
+      if (remainingDepth > 0) {
+        await walkFiles(absolutePath, remainingDepth - 1, foundFiles);
+      }
+      continue;
+    }
+
+    foundFiles.push(relativePath);
+  }
+}
+/**
+ * @name 列出当前项目的文件
+ * @description 列出对应文件目录下的文件
+ */
+const listProjectFiles = tool(
+  async ({ maxDepth }) => {
+    const foundFiles: string[] = [];
+    await walkFiles(projectRoot, maxDepth, foundFiles);
+
+    if (foundFiles.length === 0) {
+      return "No project files found.";
+    }
+
+    return foundFiles.sort().join("\n");
   },
   {
-    name: "readDir",
-    description: "read dir",
+    name: "list_project_files",
+    description: "List files inside the current project directory.",
+    schema: z.object({
+      maxDepth: z.number().int().min(0).max(4).default(2),
+    }),
   },
 );
-const readFile = tool(
-  async () =>{
+/**
+ * @name 读取文件
+ * @description 读取对应路径下的utf8文件
+ */
+const readProjectFile = tool(
+  async ({ filePath }) => {
+    const absolutePath = resolveProjectPath(filePath);
+    const rawContent = await fs.readFile(absolutePath, "utf8");
 
+    if (rawContent.length <= 6000) {
+      return rawContent;
+    }
+
+    return `${rawContent.slice(0, 6000)}\n\n[truncated]`;
   },
   {
-    name: "readFile",
-    description: "read file.",
+    name: "read_project_file",
+    description: "Read a UTF-8 text file from the current project.",
+    schema: z.object({
+      filePath: z.string().min(1).describe("Relative path inside the project"),
+    }),
   },
 );
-export const local_tools = [getWeather,getCurrentTime];
+export const local_tools = [getWeather,getCurrentTime,listProjectFiles,readProjectFile];
+
+
+
+export function LocalTools2ManagedTools(){
+  
+}

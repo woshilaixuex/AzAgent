@@ -4,6 +4,8 @@ import { promises as fs } from "node:fs";
 import { tool } from "langchain";
 import * as z from "zod";
 
+import type { CanManaged, ManagedRuntimeTool } from "../tools.js";
+
 const SKILL_ROOT = path.resolve(process.cwd(), "skills");
 const DEFAULT_BODY_FILES = ["README.md", "skill.md", "prompt.md", "body.md"];
 
@@ -31,7 +33,9 @@ export type SkillManifest = z.infer<typeof skillManifestSchema>;
  * @name 技能
  * @description 对应技能的描述信息
  */
-export class Skill<TSchema extends z.ZodTypeAny> {
+export class Skill<TSchema extends z.ZodTypeAny> implements CanManaged {
+  public readonly source = "skill" as const;
+
   constructor(
     public name: string,
     public description: string,
@@ -42,7 +46,7 @@ export class Skill<TSchema extends z.ZodTypeAny> {
     public run: (input: z.infer<TSchema>) => Promise<string> | string,
   ) {}
 
-  toTool() {
+  public toTool(): ManagedRuntimeTool {
     return tool(this.run, {
       name: this.name,
       description: this.description,

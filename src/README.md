@@ -25,8 +25,8 @@
 
 1. 首次调用 `getCliAgent()` 时读取配置并创建模型
 2. 使用 `SkillsLoader` 扫描项目根目录下的 `skills/`
-3. 把加载出的每个 `Skill` 通过 `toTool()` 转成 LangChain tool
-4. 将 `tools`、`local_tools`、`skillTools` 合并为 `allTools`
+3. 把加载出的每个 `Skill` 先通过 `toTools()` 标准化为 `ManagedTool`
+4. 取出其中的 `tool`，再与 `tools`、`local_tools` 合并为 `allTools`
 5. 创建真正执行对话的 LangChain agent
 6. 将实例缓存起来，后续请求直接复用
 

@@ -10,7 +10,6 @@ import {
   type AgentChatResponse,
   type AgentFunction,
 } from "./core/agent.js";
-import { tools } from "./tools/local/tools.js";
 import { local_tools } from "./tools/local/local.js";
 import { logger } from "./log/logger.js";
 import { SkillsLoader, type Skill } from "./tools/skills/skill.js";
@@ -220,7 +219,7 @@ export async function createCliAgent(): Promise<LangChainCliAgent> {
   const skillsLoader = new SkillsLoader();
   const loadedSkills = await skillsLoader.skillLoad();
   const skillTools = loadedSkills.map((skill) => skill.toTool());
-  const allTools = [...tools, ...local_tools, ...skillTools];
+  const allTools = [...local_tools, ...skillTools];
 
   return new LangChainCliAgent(
     allTools,

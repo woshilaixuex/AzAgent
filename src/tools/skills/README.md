@@ -35,6 +35,7 @@ skills/
 - `Skill`
   - 保存技能的 `name`、`description`、`path`、`body`、`dir`
   - 通过 `toTool()` 转成 LangChain tool
+  - 实现 `CanManaged`，因此也可以通过 `toTools()` 被统一转成 `ManagedTool`
 
 - `SkillsLoader.dirsLoad()`
   - 返回 `skills/` 下所有子目录的 `name` 与绝对 `path`
@@ -52,3 +53,12 @@ skills/
 - 有输入时，返回“技能正文 + 用户输入”
 
 这让目录型技能在还没有独立执行逻辑时，也能先作为说明型/提示型技能被加载与调用。
+
+## 与工具管理的关系
+
+`Skill` 现在自带：
+
+- `source = "skill"`
+- `toTool(): StructuredToolInterface`
+
+这意味着 `SkillsLoader.skillLoad()` 返回的 `Skill[]`，后续可以直接传给 `src/tools/tools.ts` 里的 `toTools()`，统一变成带来源信息的 `ManagedTool[]`，再交给工具管理器或 agent 继续处理。
